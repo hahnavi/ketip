@@ -39,7 +39,17 @@ namespace Ketip {
 		[GtkChild]
 		private unowned Gtk.ListBox list_box_services;
 
+		[GtkChild]
+		private unowned Gtk.Popover popover_rename;
+
+		[GtkChild]
+		private unowned Gtk.Entry entry_new_service_name;
+
+		[GtkChild]
+		private unowned Gtk.Button button_rename;
+
 		private Systemd.Manager manager;
+		private Service service_to_rename;
 
 		public Window (Gtk.Application app) {
 			Object (application: app);
@@ -68,7 +78,11 @@ namespace Ketip {
 			menu_service.add(menu_item);
 			menu_item = new Gtk.MenuItem.with_label("Rename");
 			menu_item.activate.connect(() => {
-			    print("Renaming...");
+			    service_to_rename = service;
+			    popover_rename.relative_to = row.label_service_name;
+                entry_new_service_name.text = service.name;
+			    popover_rename.popup();
+			    entry_new_service_name.is_focus = true;
 			});
 			menu_service.add(menu_item);
 			menu_item = new Gtk.MenuItem.with_label("Delete");
@@ -207,6 +221,15 @@ namespace Ketip {
 		}
 
 		[GtkCallback]
+		private bool entry_add_service_key_press_event(Gdk.EventKey event) {
+		    if ((event.keyval == 65293)
+		            && (button_add_add_service.sensitive == true)) {
+		        button_add_add_service.clicked();
+		    }
+		    return false;
+		}
+
+		[GtkCallback]
 		private void button_cancel_add_service_clicked(Gtk.Button button) {
             popover_add_service.popdown();
             clear_form_add_service();
@@ -223,6 +246,35 @@ namespace Ketip {
             popover_add_service.popdown();
             clear_form_add_service();
 		}
+
+		[GtkCallback]
+		private void entry_new_service_name_changed(Gtk.Editable editable) {
+		    if (entry_new_service_name.text != "") {
+                button_rename.sensitive = true;
+		    } else {
+		        button_rename.sensitive = false;
+		    }
+		}
+
+		[GtkCallback]
+		private bool entry_rename_service_key_press_event(Gdk.EventKey event) {
+		    if ((event.keyval == 65293) && (button_rename.sensitive == true)) {
+		        button_rename.clicked();
+		    }
+		    return false;
+		}
+
+        [GtkCallback]
+        private void button_rename_clicked(Gtk.Button button) {
+            if (entry_new_service_name.text != service_to_rename.name) {
+                var index = App.services_model.index_of(service_to_rename);
+                App.services_model.remove(service_to_rename);
+                service_to_rename.name = entry_new_service_name.text;
+                App.services_model.insert(index, service_to_rename);
+            }
+            entry_new_service_name.text = "";
+            save_and_reload_list();
+        }
 
 		private void clear_form_add_service() {
 		    entry_service_name.text = "";

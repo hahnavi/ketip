@@ -22,7 +22,10 @@ namespace Ketip {
 	public class ServiceRow : Gtk.ListBoxRow {
 
 		[GtkChild]
-		private unowned Gtk.Label label_service_name;
+		public unowned Gtk.Label label_service_name;
+
+		[GtkChild]
+		public unowned Gtk.Label label_service_unit_name;
 
 		[GtkChild]
 		public unowned Gtk.Label label_service_description;
@@ -35,7 +38,10 @@ namespace Ketip {
 
 		public ServiceRow(Service service) {
 			label_service_name.set_markup (
-				@"<b>$(service.name)</b> <small>($(service.unit_name))</small>"
+				@"<b>$(service.name)</b>"
+			);
+			label_service_unit_name.set_markup (
+			    @"<small>($(service.unit_name))</small>"
 			);
 		}
 	}

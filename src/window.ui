@@ -4,6 +4,7 @@
   <requires lib="gtk+" version="3.24"/>
   <object class="GtkPopover" id="popover_add_service">
     <property name="can-focus">False</property>
+    <property name="position">bottom</property>
     <child>
       <object class="GtkBox">
         <property name="width-request">-1</property>
@@ -39,6 +40,7 @@
                 <property name="can-focus">True</property>
                 <property name="placeholder-text" translatable="yes">Service Name</property>
                 <signal name="changed" handler="entry_service_name_add_service_changed" swapped="no"/>
+                <signal name="key-press-event" handler="entry_add_service_key_press_event" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -78,6 +80,7 @@
                 <property name="can-focus">True</property>
                 <property name="placeholder-text" translatable="yes">unit-name.service</property>
                 <signal name="changed" handler="entry_service_name_add_service_changed" swapped="no"/>
+                <signal name="key-press-event" handler="entry_add_service_key_press_event" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -214,11 +217,16 @@
   </template>
   <object class="GtkPopover" id="popover_rename">
     <property name="can-focus">False</property>
+    <property name="position">bottom</property>
     <child>
       <!-- n-columns=2 n-rows=2 -->
       <object class="GtkGrid">
         <property name="visible">True</property>
         <property name="can-focus">False</property>
+        <property name="margin-start">10</property>
+        <property name="margin-end">10</property>
+        <property name="margin-top">10</property>
+        <property name="margin-bottom">10</property>
         <property name="row-spacing">6</property>
         <property name="column-spacing">6</property>
         <child>
@@ -241,6 +249,8 @@
           <object class="GtkEntry" id="entry_new_service_name">
             <property name="visible">True</property>
             <property name="can-focus">True</property>
+            <signal name="changed" handler="entry_new_service_name_changed" swapped="no"/>
+            <signal name="key-press-event" handler="entry_rename_service_key_press_event" swapped="no"/>
           </object>
           <packing>
             <property name="left-attach">0</property>
@@ -251,8 +261,10 @@
           <object class="GtkButton" id="button_rename">
             <property name="label" translatable="yes">Rename</property>
             <property name="visible">True</property>
+            <property name="sensitive">False</property>
             <property name="can-focus">True</property>
             <property name="receives-default">True</property>
+            <signal name="clicked" handler="button_rename_clicked" swapped="no"/>
             <style>
               <class name="suggested-action"/>
             </style>

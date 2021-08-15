@@ -21,10 +21,7 @@ namespace Ketip.Systemd {
     [DBus (name = "org.freedesktop.DBus.Properties")]
     public interface Properties : DBusProxy {
 
-        [DBus (name = "Get")]
-        public abstract Variant get(string interface, string property) throws DBusError, IOError;
-
         [DBus (name = "PropertiesChanged")]
-        public signal void properties_changed(string interface, HashTable<string, Variant> changed_properties, string[] invalidated_properties);
+        public signal void properties_changed(string iface, HashTable<string, Variant> changed_properties, string[] invalidated_properties);
     }
 }

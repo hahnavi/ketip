@@ -19,7 +19,7 @@
 namespace Ketip.Systemd {
 
     [DBus (name = "org.freedesktop.systemd1.Unit", timeout = 120000)]
-    public interface Unit : GLib.Object {
+    public interface Unit : DBusProxy {
 
         [DBus (name = "Description")]
         public abstract string description { owned get; }
