@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="ketip">
+	<schema id="io.github.hahnavi.Ketip" path="/io/github/hahnavi/Ketip/">
+	  <key name="services" type="s">
+	    <default>WEWEWE</default>
+	    <summary>Service List</summary>
+	    <description>
+	      List of services to manage
+	    </description>
+	  </key>
+	</schema>
+</schemalist>

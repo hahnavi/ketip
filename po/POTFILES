@@ -1,0 +1,7 @@
+data/io.github.hahnavi.Ketip.desktop.in
+data/io.github.hahnavi.Ketip.appdata.xml.in
+data/io.github.hahnavi.Ketip.gschema.xml
+src/window.ui
+src/main.vala
+src/window.vala
+
