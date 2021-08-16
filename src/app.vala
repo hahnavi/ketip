@@ -35,22 +35,6 @@ namespace Ketip {
                 }
 
                 load_config_file();
-
-                var action = new SimpleAction("about", null);
-                action.activate.connect (() => {
-                    string[] authors = {"Abdul Munif Hanafi"};
-                    Gtk.show_about_dialog (
-                        active_window,
-                        "authors", authors,
-                        "copyright", "Copyright \xc2\xa9 2021 Abdul Munif Hanafi",
-                        "license-type", Gtk.License.GPL_3_0,
-                        "program-name", "Ketip",
-                        "comments", "systemd Service Manager",
-                        "logo-icon-name", Config.APP_ID,
-                        "version", Config.VERSION,
-                        "website", "https://hahnavi.github.io/ketip/");
-                    });
-                add_action (action);
             });
 
             activate.connect (() => {

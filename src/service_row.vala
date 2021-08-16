@@ -36,6 +36,21 @@ namespace Ketip {
 		[GtkChild]
 		public unowned Gtk.MenuButton button_menu_service;
 
+		[GtkChild]
+		public unowned Gtk.ModelButton button_restart_service;
+
+		[GtkChild]
+		public unowned Gtk.ModelButton button_reload_service;
+
+		[GtkChild]
+		public unowned Gtk.Separator separator_menu_service_1;
+
+		[GtkChild]
+		public unowned Gtk.ModelButton button_rename_service;
+
+		[GtkChild]
+		public unowned Gtk.ModelButton button_delete_service;
+
 		public ServiceRow(Service service) {
 			label_service_name.set_markup (
 				@"<b>$(service.name)</b>"

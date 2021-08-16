@@ -21,11 +21,17 @@ namespace Ketip.Systemd {
     [DBus (name = "org.freedesktop.systemd1.Unit", timeout = 120000)]
     public interface Unit : DBusProxy {
 
+        [DBus (name = "Id")]
+        public abstract string id { owned get; }
+
         [DBus (name = "Description")]
         public abstract string description { owned get; }
 
         [DBus (name = "ActiveState")]
         public abstract string active_state { owned get; }
+
+        [DBus (name = "FragmentPath")]
+        public abstract string fragment_path { owned get; }
 
         [DBus (name = "CanReload")]
         public abstract bool can_reload { owned get; }

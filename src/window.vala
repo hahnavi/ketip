@@ -34,7 +34,10 @@ namespace Ketip {
 	    private unowned Gtk.Button button_add_add_service;
 
 		[GtkChild]
-		private unowned Gtk.MenuButton button_menu_main;
+		private unowned Gtk.ModelButton menu_main_reload_list;
+
+		[GtkChild]
+		private unowned Gtk.ModelButton menu_main_about;
 
 		[GtkChild]
 		private unowned Gtk.ListBox list_box_services;
@@ -61,24 +64,41 @@ namespace Ketip {
 			} catch (IOError e) {
 				print(e.message);
 			}
-			var menu_main = new Menu();
-			menu_main.append("About Ketip", "app.about");
-			button_menu_main.menu_model = menu_main;
-			save_and_reload_list();
+			menu_main_reload_list.clicked.connect(() => {
+				reload_list();
+			});
+			menu_main_about.clicked.connect(() => {
+				string[] authors = {"Abdul Munif Hanafi"};
+				Gtk.show_about_dialog (
+					this,
+					"authors", authors,
+					"copyright", "Copyright \xc2\xa9 2021 Abdul Munif Hanafi",
+					"license-type", Gtk.License.GPL_3_0,
+					"program-name", "Ketip",
+					"comments", "systemd Service Manager",
+					"logo-icon-name", Config.APP_ID,
+					"version", Config.VERSION,
+					"website", "https://hahnavi.github.io/ketip/"
+				);
+			});
+			reload_list();
 		}
 
 		private Gtk.Widget create_list_row(Object serviceObj) {
 			var service = (Service) serviceObj;
 			var row = new ServiceRow(service);
 			
-
 			Systemd.Unit u = null;
-
 			try {
 				u = Bus.get_proxy_sync(
 					BusType.SYSTEM,
 					"org.freedesktop.systemd1",
 					manager.load_unit(service.unit_name));
+			} catch (Error e) {
+				print(e.message);
+			}
+
+			if (u.fragment_path != "") {
 				if (u.active_state == "active") {
 					row.switch_service.active = true;
 				} else {
@@ -86,49 +106,48 @@ namespace Ketip {
 				}
 				row.switch_service.notify["active"].connect(() => {
 					if (row.switch_service.active) {
-						start_service(service.unit_name);
+						start_service(u);
 					} else {
-						stop_service(service.unit_name);
+						stop_service(u);
 					}
 				});
 				row.label_service_description.set_markup(
 					@"<small>$(u.description)</small>"
 				);
-			} catch (Error e) {
-				print(e.message);
+			} else {
+				row.label_service_name.set_markup(@"<i><b>$(service.name)</b></i>");
+				row.label_service_unit_name.set_markup(
+					@"<i><small>($(service.unit_name))</small></i>"
+				);
+				row.label_service_description.set_markup(
+					"<i><small>(service not found)</small></i>"
+				);
+				row.switch_service.sensitive = false;
 			}
 
-			var popover_menu_service = new Gtk.PopoverMenu();
-			var box_menu = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
-			box_menu.margin = 10;
-			var button = new Gtk.ModelButton();
-			button.label = "Restart";
-			button.clicked.connect(() => {
-				restart_service(service.unit_name);
-			});
-			box_menu.add(button);
-			if (u != null && u.can_reload == true) {
-				button = new Gtk.ModelButton();
-				button.label = "Reload";
-				button.clicked.connect(() => {
-					reload_service(service.unit_name);
-				});
-			box_menu.add(button);
+			if (u.fragment_path != "") {
+				if (u.active_state == "active") {
+					row.button_restart_service.clicked.connect(() => {
+						restart_service(u);
+					});
+					row.button_restart_service.show();
+					if (u.can_reload == true) {
+						row.button_reload_service.clicked.connect(() => {
+							reload_service(u);
+						});
+						row.button_reload_service.show();
+					}
+					row.separator_menu_service_1.show();
+				}
 			}
-			box_menu.add(new Gtk.Separator(Gtk.Orientation.HORIZONTAL));
-			button = new Gtk.ModelButton();
-			button.label = "Rename";
-			button.clicked.connect(() => {
+			row.button_rename_service.clicked.connect(() => {
 				service_to_rename = service;
 			    popover_rename.relative_to = row.label_service_name;
                 entry_new_service_name.text = service.name;
 			    popover_rename.popup();
 			    entry_new_service_name.is_focus = true;
 			});
-			box_menu.add(button);
-			button = new Gtk.ModelButton();
-			button.label = "Delete";
-			button.clicked.connect(() => {
+			row.button_delete_service.clicked.connect(() => {
 				var dialog = new Gtk.MessageDialog(
 					this,
 					Gtk.DialogFlags.DESTROY_WITH_PARENT,
@@ -144,29 +163,11 @@ namespace Ketip {
 				}
 				dialog.destroy();
 			});
-			box_menu.add(button);
-			box_menu.show_all();
-			popover_menu_service.add(box_menu);
-			row.button_menu_service.popover = popover_menu_service;
 
 			return row;
 		}
 
-		private void start_service(string unit_name) {
-			Systemd.Unit u = null;
-
-			try {
-				u = Bus.get_proxy_sync(
-					BusType.SYSTEM,
-					"org.freedesktop.systemd1",
-					manager.load_unit(unit_name));
-			} catch (Error e) {
-				show_error(e);
-			}
-
-			if (u == null)
-				return;
-
+		private void start_service(Systemd.Unit u) {
 			try {
 				u.start("replace");
 			} catch (Error e) {
@@ -174,21 +175,7 @@ namespace Ketip {
 			}
 		}
 
-		public void stop_service(string unit_name) {
-			Systemd.Unit u = null;
-
-			try {
-				u = Bus.get_proxy_sync(
-					BusType.SYSTEM,
-					"org.freedesktop.systemd1",
-					manager.load_unit(unit_name));
-			} catch (Error e) {
-				show_error(e);
-			}
-
-			if (u == null)
-				return;
-
+		public void stop_service(Systemd.Unit u) {
 			try {
 				u.stop("replace");
 			} catch (Error e) {
@@ -196,21 +183,7 @@ namespace Ketip {
 			}
 		}
 
-		public void restart_service(string unit_name) {
-			Systemd.Unit u = null;
-
-			try {
-				u = Bus.get_proxy_sync(
-					BusType.SYSTEM,
-					"org.freedesktop.systemd1",
-					manager.load_unit(unit_name));
-			} catch (Error e) {
-				show_error(e);
-			}
-
-			if (u == null)
-				return;
-
+		public void restart_service(Systemd.Unit u) {
 			try {
 				u.restart("replace");
 			} catch (Error e) {
@@ -218,21 +191,7 @@ namespace Ketip {
 			}
 		}
 
-		public void reload_service(string unit_name) {
-			Systemd.Unit u = null;
-
-			try {
-				u = Bus.get_proxy_sync(
-					BusType.SYSTEM,
-					"org.freedesktop.systemd1",
-					manager.load_unit(unit_name));
-			} catch (Error e) {
-				show_error(e);
-			}
-
-			if (u == null)
-				return;
-
+		public void reload_service(Systemd.Unit u) {
 			try {
 				u.reload("replace");
 			} catch (Error e) {
@@ -282,10 +241,25 @@ namespace Ketip {
 	            entry_service_name.text,
 	            entry_unit_name.text
             );
-	        App.services_model.add(service);
-	        save_and_reload_list();
-            popover_add_service.popdown();
-            clear_form_add_service();
+			Systemd.Unit u = null;
+			try {
+				u = Bus.get_proxy_sync(
+						BusType.SYSTEM,
+						"org.freedesktop.systemd1",
+						manager.load_unit(service.unit_name));
+				if (u.fragment_path != "") {
+					App.services_model.add(service);
+					save_and_reload_list();
+					popover_add_service.popdown();
+					clear_form_add_service();
+				} else {
+					throw new DBusError.FILE_NOT_FOUND(
+						@"The system cannot find '$(service.unit_name)' unit file."
+					);
+				}
+			} catch (Error e) {
+				show_error(e);
+			}
 		}
 
 		[GtkCallback]
@@ -324,6 +298,10 @@ namespace Ketip {
 
 		private void save_and_reload_list() {
 			save_config_file();
+			reload_list();
+		}
+
+		private void reload_list() {
 			list_box_services.bind_model(App.services_model, create_list_row);
 			list_box_services.show_all();
 		}
