@@ -2,6 +2,23 @@
 <!-- Generated with glade 3.38.2 -->
 <interface>
   <requires lib="gtk+" version="3.24"/>
+  <object class="GtkListStore" id="list_store_unit_files">
+    <columns>
+      <!-- column-name unit_file -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkEntryCompletion" id="entry_completion_unit_name">
+    <property name="model">list_store_unit_files</property>
+    <property name="text-column">0</property>
+    <property name="inline-selection">True</property>
+    <child>
+      <object class="GtkCellRendererText"/>
+      <attributes>
+        <attribute name="text">0</attribute>
+      </attributes>
+    </child>
+  </object>
   <object class="GtkPopover" id="popover_add_service">
     <property name="can-focus">False</property>
     <property name="position">bottom</property>
@@ -79,6 +96,7 @@
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="placeholder-text" translatable="yes">unit-name.service</property>
+                <property name="completion">entry_completion_unit_name</property>
                 <signal name="changed" handler="entry_service_name_add_service_changed" swapped="no"/>
                 <signal name="key-press-event" handler="entry_add_service_key_press_event" swapped="no"/>
               </object>

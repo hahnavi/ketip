@@ -31,6 +31,9 @@ namespace Ketip {
 	    private unowned Gtk.Entry entry_unit_name;
 
 		[GtkChild]
+		private unowned Gtk.ListStore list_store_unit_files;
+
+		[GtkChild]
 	    private unowned Gtk.Button button_add_add_service;
 
 		[GtkChild]
@@ -82,6 +85,30 @@ namespace Ketip {
 				);
 			});
 			reload_list();
+			get_list_unit_files.begin((obj, res) => {
+				get_list_unit_files.end(res);
+			});
+		}
+
+		private async void get_list_unit_files() {
+			Timeout.add(1000, () => {
+				if (manager != null) {
+					try {
+						Systemd.Manager.UnitFile[] unit_files = manager.list_unit_files();
+						foreach (var unit_file in unit_files) {
+							if (unit_file.path.has_suffix(".service")) {
+								var splitted = unit_file.path.split("/");
+								Gtk.TreeIter iter;
+								list_store_unit_files.append(out iter);
+								list_store_unit_files.set(iter, 0, splitted[splitted.length - 1]);
+							}
+						}
+					} catch (Error e) {
+						show_error(e);
+					}
+				}
+				return false;
+			});
 		}
 
 		private Gtk.Widget create_list_row(Object serviceObj) {
@@ -237,13 +264,17 @@ namespace Ketip {
 
 		[GtkCallback]
 		private void button_add_add_service_clicked(Gtk.Button button) {
-		    var service = new Service(
-	            entry_service_name.text,
-	            entry_unit_name.text
-            );
-			Systemd.Unit u = null;
 			try {
-				u = Bus.get_proxy_sync(
+				if (is_service_already_exists(entry_unit_name.text)) {
+					throw new IOError.EXISTS(
+						@"'$(entry_unit_name.text)' already exists."
+					);
+				}
+				var service = new Service(
+					entry_service_name.text,
+					entry_unit_name.text
+				);
+				Systemd.Unit u = Bus.get_proxy_sync(
 						BusType.SYSTEM,
 						"org.freedesktop.systemd1",
 						manager.load_unit(service.unit_name));
@@ -260,6 +291,15 @@ namespace Ketip {
 			} catch (Error e) {
 				show_error(e);
 			}
+		}
+
+		private bool is_service_already_exists(string unit_name) {
+			foreach (var service in App.services_model) {
+				if (service.unit_name == unit_name) {
+					return true;
+				}
+			}
+			return false;
 		}
 
 		[GtkCallback]

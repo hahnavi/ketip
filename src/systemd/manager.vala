@@ -21,7 +21,15 @@ namespace Ketip.Systemd {
     [DBus (name = "org.freedesktop.systemd1.Manager")]
     public interface Manager : DBusProxy {
 
+        public struct UnitFile {
+            string path;
+            string state;
+        }
+
         [DBus (name = "LoadUnit")]
         public abstract ObjectPath load_unit(string name) throws DBusError, IOError;
+
+        [DBus (name = "ListUnitFiles")]
+        public abstract UnitFile[] list_unit_files() throws DBusError, IOError;
     }
 }
