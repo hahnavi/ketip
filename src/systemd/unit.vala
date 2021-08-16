@@ -27,6 +27,9 @@ namespace Ketip.Systemd {
         [DBus (name = "ActiveState")]
         public abstract string active_state { owned get; }
 
+        [DBus (name = "CanReload")]
+        public abstract bool can_reload { owned get; }
+
         [DBus (name = "Start")]
         public abstract GLib.ObjectPath start(string mode) throws DBusError, IOError;
 

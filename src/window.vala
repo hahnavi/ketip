@@ -70,44 +70,12 @@ namespace Ketip {
 		private Gtk.Widget create_list_row(Object serviceObj) {
 			var service = (Service) serviceObj;
 			var row = new ServiceRow(service);
-			var menu_service = new Gtk.Menu ();
-			var menu_item = new Gtk.MenuItem.with_label("Restart");
-			menu_item.activate.connect(() => {
-				restart_service(service.unit_name);
-			});
-			menu_service.add(menu_item);
-			menu_item = new Gtk.MenuItem.with_label("Rename");
-			menu_item.activate.connect(() => {
-			    service_to_rename = service;
-			    popover_rename.relative_to = row.label_service_name;
-                entry_new_service_name.text = service.name;
-			    popover_rename.popup();
-			    entry_new_service_name.is_focus = true;
-			});
-			menu_service.add(menu_item);
-			menu_item = new Gtk.MenuItem.with_label("Delete");
-			menu_item.activate.connect(() => {
-			    var dialog = new Gtk.MessageDialog(
-			        this,
-			        Gtk.DialogFlags.DESTROY_WITH_PARENT,
-			        Gtk.MessageType.QUESTION,
-			        Gtk.ButtonsType.YES_NO,
-			        @"Are you sure you want to delete '$(service.name)' from the list?"
-			    );
-			    dialog.format_secondary_text(@"($(service.unit_name))");
-			    var response = dialog.run();
-			    if (response == Gtk.ResponseType.YES) {
-				    App.services_model.remove(service);
-				    save_and_reload_list();
-				}
-			    dialog.destroy();
-			});
-			menu_service.add(menu_item);
-			menu_service.show_all();
-			row.button_menu_service.popup = menu_service;
+			
+
+			Systemd.Unit u = null;
 
 			try {
-				Systemd.Unit u = Bus.get_proxy_sync(
+				u = Bus.get_proxy_sync(
 					BusType.SYSTEM,
 					"org.freedesktop.systemd1",
 					manager.load_unit(service.unit_name));
@@ -129,6 +97,57 @@ namespace Ketip {
 			} catch (Error e) {
 				print(e.message);
 			}
+
+			var popover_menu_service = new Gtk.PopoverMenu();
+			var box_menu = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
+			box_menu.margin = 10;
+			var button = new Gtk.ModelButton();
+			button.label = "Restart";
+			button.clicked.connect(() => {
+				restart_service(service.unit_name);
+			});
+			box_menu.add(button);
+			if (u != null && u.can_reload == true) {
+				button = new Gtk.ModelButton();
+				button.label = "Reload";
+				button.clicked.connect(() => {
+					reload_service(service.unit_name);
+				});
+			box_menu.add(button);
+			}
+			box_menu.add(new Gtk.Separator(Gtk.Orientation.HORIZONTAL));
+			button = new Gtk.ModelButton();
+			button.label = "Rename";
+			button.clicked.connect(() => {
+				service_to_rename = service;
+			    popover_rename.relative_to = row.label_service_name;
+                entry_new_service_name.text = service.name;
+			    popover_rename.popup();
+			    entry_new_service_name.is_focus = true;
+			});
+			box_menu.add(button);
+			button = new Gtk.ModelButton();
+			button.label = "Delete";
+			button.clicked.connect(() => {
+				var dialog = new Gtk.MessageDialog(
+					this,
+					Gtk.DialogFlags.DESTROY_WITH_PARENT,
+					Gtk.MessageType.QUESTION,
+					Gtk.ButtonsType.YES_NO,
+					@"Are you sure you want to delete '$(service.name)' from the list?"
+				);
+				dialog.format_secondary_text(@"($(service.unit_name))");
+				var response = dialog.run();
+				if (response == Gtk.ResponseType.YES) {
+					App.services_model.remove(service);
+					save_and_reload_list();
+				}
+				dialog.destroy();
+			});
+			box_menu.add(button);
+			box_menu.show_all();
+			popover_menu_service.add(box_menu);
+			row.button_menu_service.popover = popover_menu_service;
 
 			return row;
 		}
@@ -194,6 +213,28 @@ namespace Ketip {
 
 			try {
 				u.restart("replace");
+			} catch (Error e) {
+				show_error(e);
+			}
+		}
+
+		public void reload_service(string unit_name) {
+			Systemd.Unit u = null;
+
+			try {
+				u = Bus.get_proxy_sync(
+					BusType.SYSTEM,
+					"org.freedesktop.systemd1",
+					manager.load_unit(unit_name));
+			} catch (Error e) {
+				show_error(e);
+			}
+
+			if (u == null)
+				return;
+
+			try {
+				u.reload("replace");
 			} catch (Error e) {
 				show_error(e);
 			}
