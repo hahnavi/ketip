@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
-  <gresource prefix="/io/github/hahnavi/Ketip">
+  <gresource prefix="/com/github/hahnavi/ketip">
     <file>window.ui</file>
     <file>service_row.ui</file>
   </gresource>

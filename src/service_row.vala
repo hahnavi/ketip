@@ -18,7 +18,7 @@
 
 namespace Ketip {
 
-	[GtkTemplate (ui = "/io/github/hahnavi/Ketip/service_row.ui")]
+	[GtkTemplate (ui = "/com/github/hahnavi/ketip/service_row.ui")]
 	public class ServiceRow : Gtk.ListBoxRow {
 
 		[GtkChild]
@@ -51,13 +51,57 @@ namespace Ketip {
 		[GtkChild]
 		public unowned Gtk.ModelButton button_delete_service;
 
+		public Service service;
+		public Systemd.Unit? unit = null;
+
 		public ServiceRow(Service service) {
+			this.service = service;
+			try {
+				unit = Bus.get_proxy_sync(
+					BusType.SYSTEM,
+					"org.freedesktop.systemd1",
+					App.manager.load_unit(service.unit_name));
+			} catch (Error e) {
+				print(@"$(e.message)\n");
+			}
+			reload_widget();
+		}
+
+		public void reload_widget() {
 			label_service_name.set_markup (
 				@"<b>$(service.name)</b>"
 			);
 			label_service_unit_name.set_markup (
 			    @"<small>($(service.unit_name))</small>"
 			);
+			if (unit.fragment_path != "") {
+				label_service_description.set_markup(
+					@"<small>$(unit.description)</small>"
+				);
+			} else {
+				label_service_name.set_markup(@"<i><b>$(service.name)</b></i>");
+				label_service_unit_name.set_markup(
+					@"<i><small>($(service.unit_name))</small></i>"
+				);
+				label_service_description.set_markup(
+					"<i><small>(service not found)</small></i>"
+				);
+				switch_service.sensitive = false;
+			}
+
+			if (unit.active_state == "active") {
+				switch_service.active = true;
+				button_restart_service.show();
+				if (unit.can_reload == true) {
+					button_reload_service.show();
+				}
+				separator_menu_service_1.show();
+			} else {
+				switch_service.active = false;
+				button_restart_service.hide();
+				button_reload_service.hide();
+				separator_menu_service_1.hide();
+			}
 		}
 	}
 }

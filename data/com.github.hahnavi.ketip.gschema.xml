@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="ketip">
-	<schema id="com.github.hahnavi.ketip" path="/io/github/hahnavi/Ketip/">
+	<schema id="com.github.hahnavi.ketip" path="/com/github/hahnavi/ketip/">
 	  <key name="services" type="s">
 	    <default>WEWEWE</default>
 	    <summary>Service List</summary>

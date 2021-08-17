@@ -22,6 +22,7 @@ namespace Ketip {
 
         public static App app;
         public static ServicesListModel services_model = new ServicesListModel ();
+        public static Systemd.Manager? manager = null;
 
         public App() {
             application_id = Config.APP_ID;
@@ -35,6 +36,15 @@ namespace Ketip {
                 }
 
                 load_config_file();
+
+                try {
+                    manager = Bus.get_proxy_sync(
+                        BusType.SYSTEM,
+                        "org.freedesktop.systemd1",
+                        "/org/freedesktop/systemd1");
+                } catch (IOError e) {
+                    print(@"$(e.message)\n");
+                }
             });
 
             activate.connect (() => {

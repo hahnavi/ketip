@@ -18,7 +18,7 @@
 
 namespace Ketip {
 
-	[GtkTemplate (ui = "/io/github/hahnavi/Ketip/window.ui")]
+	[GtkTemplate (ui = "/com/github/hahnavi/ketip/window.ui")]
 	public class Window : Gtk.ApplicationWindow {
 
 	    [GtkChild]
@@ -54,19 +54,16 @@ namespace Ketip {
 		[GtkChild]
 		private unowned Gtk.Button button_rename;
 
-		private Systemd.Manager manager;
+		private HashTable<string, Systemd.Properties> props;
 		private Service service_to_rename;
 
 		public Window (Gtk.Application app) {
-			Object (application: app);
-			try {
-				manager = Bus.get_proxy_sync(
-					BusType.SYSTEM,
-					"org.freedesktop.systemd1",
-					"/org/freedesktop/systemd1");
-			} catch (IOError e) {
-				print(e.message);
-			}
+			Object (
+				application: app,
+				window_position: Gtk.WindowPosition.CENTER			
+			);
+			props = new HashTable<string, Systemd.Properties>(str_hash, str_equal);
+
 			menu_main_reload_list.clicked.connect(() => {
 				reload_list();
 			});
@@ -92,9 +89,9 @@ namespace Ketip {
 
 		private async void get_list_unit_files() {
 			Timeout.add(1000, () => {
-				if (manager != null) {
+				if (App.manager != null) {
 					try {
-						Systemd.Manager.UnitFile[] unit_files = manager.list_unit_files();
+						Systemd.Manager.UnitFile[] unit_files = App.manager.list_unit_files();
 						foreach (var unit_file in unit_files) {
 							if (unit_file.path.has_suffix(".service")) {
 								var splitted = unit_file.path.split("/");
@@ -114,59 +111,54 @@ namespace Ketip {
 		private Gtk.Widget create_list_row(Object serviceObj) {
 			var service = (Service) serviceObj;
 			var row = new ServiceRow(service);
-			
-			Systemd.Unit u = null;
-			try {
-				u = Bus.get_proxy_sync(
-					BusType.SYSTEM,
-					"org.freedesktop.systemd1",
-					manager.load_unit(service.unit_name));
-			} catch (Error e) {
-				print(e.message);
-			}
 
-			if (u.fragment_path != "") {
-				if (u.active_state == "active") {
-					row.switch_service.active = true;
-				} else {
-					row.switch_service.active = false;
-				}
-				row.switch_service.notify["active"].connect(() => {
+			if (row.unit.fragment_path != "") {
+				var handler_switch = row.switch_service.notify["active"].connect(() => {
 					if (row.switch_service.active) {
-						start_service(u);
+						start_service(row.unit);
 					} else {
-						stop_service(u);
+						stop_service(row.unit);
 					}
 				});
-				row.label_service_description.set_markup(
-					@"<small>$(u.description)</small>"
-				);
-			} else {
-				row.label_service_name.set_markup(@"<i><b>$(service.name)</b></i>");
-				row.label_service_unit_name.set_markup(
-					@"<i><small>($(service.unit_name))</small></i>"
-				);
-				row.label_service_description.set_markup(
-					"<i><small>(service not found)</small></i>"
-				);
-				row.switch_service.sensitive = false;
-			}
 
-			if (u.fragment_path != "") {
-				if (u.active_state == "active") {
-					row.button_restart_service.clicked.connect(() => {
-						restart_service(u);
+				try {
+					Systemd.Properties prop = Bus.get_proxy_sync(
+						BusType.SYSTEM,
+						"org.freedesktop.systemd1",
+						App.manager.load_unit(service.unit_name));
+					prop.properties_changed.connect((i, p, iv) => {
+						if (i == "org.freedesktop.systemd1.Unit") {
+							p.foreach ((k,v) => {
+								if (k == "ActiveState") {
+									var state = (string) v == "active" ? true : false;
+									if (row.switch_service.active != state) {
+										row.switch_service.disconnect(handler_switch);
+										row.switch_service.active = state;
+										row.reload_widget();
+										handler_switch = row.switch_service.notify["active"].connect(() => {
+											if (row.switch_service.active) {
+												start_service(row.unit);
+											} else {
+												stop_service(row.unit);
+											}
+										});
+									}
+								}
+							});
+						}
 					});
-					row.button_restart_service.show();
-					if (u.can_reload == true) {
-						row.button_reload_service.clicked.connect(() => {
-							reload_service(u);
-						});
-						row.button_reload_service.show();
-					}
-					row.separator_menu_service_1.show();
+					props.insert(service.unit_name, prop);
+				} catch (Error e) {
+					print(@"$(e.message)\n");
 				}
 			}
+
+			row.button_restart_service.clicked.connect(() => {
+				restart_service(row.unit);
+			});
+			row.button_reload_service.clicked.connect(() => {
+				reload_service(row.unit);
+			});
 			row.button_rename_service.clicked.connect(() => {
 				service_to_rename = service;
 			    popover_rename.relative_to = row.label_service_name;
@@ -277,7 +269,7 @@ namespace Ketip {
 				Systemd.Unit u = Bus.get_proxy_sync(
 						BusType.SYSTEM,
 						"org.freedesktop.systemd1",
-						manager.load_unit(service.unit_name));
+						App.manager.load_unit(service.unit_name));
 				if (u.fragment_path != "") {
 					App.services_model.add(service);
 					save_and_reload_list();
@@ -342,6 +334,7 @@ namespace Ketip {
 		}
 
 		private void reload_list() {
+			props.remove_all();
 			list_box_services.bind_model(App.services_model, create_list_row);
 			list_box_services.show_all();
 		}
