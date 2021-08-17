@@ -1,6 +1,6 @@
 desktop_file = i18n.merge_file(
-  input: 'io.github.hahnavi.Ketip.desktop.in',
-  output: 'io.github.hahnavi.Ketip.desktop',
+  input: 'com.github.hahnavi.ketip.desktop.in',
+  output: 'com.github.hahnavi.ketip.desktop',
   type: 'desktop',
   po_dir: '../po',
   install: true,
@@ -15,8 +15,8 @@ if desktop_utils.found()
 endif
 
 appstream_file = i18n.merge_file(
-  input: 'io.github.hahnavi.Ketip.appdata.xml.in',
-  output: 'io.github.hahnavi.Ketip.appdata.xml',
+  input: 'com.github.hahnavi.ketip.appdata.xml.in',
+  output: 'com.github.hahnavi.ketip.appdata.xml',
   po_dir: '../po',
   install: true,
   install_dir: join_paths(get_option('datadir'), 'appdata')
@@ -29,7 +29,7 @@ if appstream_util.found()
   )
 endif
 
-install_data('io.github.hahnavi.Ketip.gschema.xml',
+install_data('com.github.hahnavi.ketip.gschema.xml',
   install_dir: join_paths(get_option('datadir'), 'glib-2.0/schemas')
 )
 

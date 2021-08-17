@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=ketip
 Exec=ketip
-Icon=io.github.hahnavi.Ketip
+Icon=com.github.hahnavi.ketip
 Terminal=false
 Type=Application
 Categories=GTK;

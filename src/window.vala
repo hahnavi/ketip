@@ -81,7 +81,7 @@ namespace Ketip {
 					"comments", "systemd Service Manager",
 					"logo-icon-name", Config.APP_ID,
 					"version", Config.VERSION,
-					"website", "https://hahnavi.github.io/ketip/"
+					"website", "https://github.com/hahnavi/ketip"
 				);
 			});
 			reload_list();

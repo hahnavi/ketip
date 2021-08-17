@@ -1,4 +1,4 @@
-application_id = 'io.github.hahnavi.Ketip'
+application_id = 'com.github.hahnavi.ketip'
 
 scalable_dir = join_paths('hicolor', 'scalable', 'apps')
 install_data(

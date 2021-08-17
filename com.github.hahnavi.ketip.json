@@ -1,5 +1,5 @@
 {
-    "app-id" : "io.github.hahnavi.Ketip",
+    "app-id" : "com.github.hahnavi.ketip",
     "runtime" : "org.gnome.Platform",
     "runtime-version" : "40",
     "sdk" : "org.gnome.Sdk",
