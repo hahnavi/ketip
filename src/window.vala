@@ -109,7 +109,10 @@ namespace Ketip {
 		}
 
 		private Gtk.Widget create_list_row(Object serviceObj) {
-			var service = (Service) serviceObj;
+			return new_service_row((Service) serviceObj);
+		}
+
+		private ServiceRow new_service_row(Service service) {
 			var row = new ServiceRow(service);
 
 			if (row.unit.fragment_path != "") {
@@ -178,7 +181,9 @@ namespace Ketip {
 				var response = dialog.run();
 				if (response == Gtk.ResponseType.YES) {
 					App.services_model.remove(service);
-					save_and_reload_list();
+					save_config_file();
+					props.remove(service.unit_name);
+					row.destroy();
 				}
 				dialog.destroy();
 			});
@@ -272,9 +277,11 @@ namespace Ketip {
 						App.manager.load_unit(service.unit_name));
 				if (u.fragment_path != "") {
 					App.services_model.add(service);
-					save_and_reload_list();
+					save_config_file();
 					popover_add_service.popdown();
 					clear_form_add_service();
+					list_box_services.add(new_service_row(service));
+					list_box_services.show_all();
 				} else {
 					throw new DBusError.FILE_NOT_FOUND(
 						@"The system cannot find '$(service.unit_name)' unit file."
@@ -314,23 +321,20 @@ namespace Ketip {
         [GtkCallback]
         private void button_rename_clicked(Gtk.Button button) {
             if (entry_new_service_name.text != service_to_rename.name) {
-                var index = App.services_model.index_of(service_to_rename);
-                App.services_model.remove(service_to_rename);
+                var position = App.services_model.index_of(service_to_rename);
                 service_to_rename.name = entry_new_service_name.text;
-                App.services_model.insert(index, service_to_rename);
+				App.services_model.@set(position, service_to_rename);
+				save_config_file();
+				((ServiceRow) list_box_services.get_row_at_index(position))
+					.reload_widget();
             }
             entry_new_service_name.text = "";
-            save_and_reload_list();
+			popover_rename.popdown();
         }
 
 		private void clear_form_add_service() {
 		    entry_service_name.text = "";
             entry_unit_name.text = "";
-		}
-
-		private void save_and_reload_list() {
-			save_config_file();
-			reload_list();
 		}
 
 		private void reload_list() {
