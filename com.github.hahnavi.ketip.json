@@ -5,10 +5,10 @@
     "sdk" : "org.gnome.Sdk",
     "command" : "ketip",
     "finish-args" : [
-        "--share=network",
         "--share=ipc",
         "--socket=fallback-x11",
-        "--socket=wayland"
+        "--socket=wayland",
+        "--socket=system-bus"
     ],
     "cleanup" : [
         "/include",

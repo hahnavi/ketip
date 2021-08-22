@@ -101,7 +101,7 @@ namespace Ketip {
 							}
 						}
 					} catch (Error e) {
-						show_error(e);
+						show_error_dialog(this, e);
 					}
 				}
 				return false;
@@ -113,55 +113,12 @@ namespace Ketip {
 		}
 
 		private ServiceRow new_service_row(Service service) {
-			var row = new ServiceRow(service);
+			var row = new ServiceRow(this, service);
 
-			if (row.unit.fragment_path != "") {
-				var handler_switch = row.switch_service.notify["active"].connect(() => {
-					if (row.switch_service.active) {
-						start_service(row.unit);
-					} else {
-						stop_service(row.unit);
-					}
-				});
-
-				try {
-					Systemd.Properties prop = Bus.get_proxy_sync(
-						BusType.SYSTEM,
-						"org.freedesktop.systemd1",
-						App.manager.load_unit(service.unit_name));
-					prop.properties_changed.connect((i, p, iv) => {
-						if (i == "org.freedesktop.systemd1.Unit") {
-							p.foreach ((k,v) => {
-								if (k == "ActiveState") {
-									var state = (string) v == "active" ? true : false;
-									if (row.switch_service.active != state) {
-										row.switch_service.disconnect(handler_switch);
-										row.switch_service.active = state;
-										row.reload_widget();
-										handler_switch = row.switch_service.notify["active"].connect(() => {
-											if (row.switch_service.active) {
-												start_service(row.unit);
-											} else {
-												stop_service(row.unit);
-											}
-										});
-									}
-								}
-							});
-						}
-					});
-					props.insert(service.unit_name, prop);
-				} catch (Error e) {
-					print(@"$(e.message)\n");
-				}
+			if (row.unit.fragment_path != "" && row.prop != null) {
+				props.insert(service.unit_name, row.prop);
 			}
 
-			row.button_restart_service.clicked.connect(() => {
-				restart_service(row.unit);
-			});
-			row.button_reload_service.clicked.connect(() => {
-				reload_service(row.unit);
-			});
 			row.button_rename_service.clicked.connect(() => {
 				service_to_rename = service;
 			    popover_rename.relative_to = row.label_service_name;
@@ -170,67 +127,10 @@ namespace Ketip {
 			    entry_new_service_name.is_focus = true;
 			});
 			row.button_delete_service.clicked.connect(() => {
-				var dialog = new Gtk.MessageDialog(
-					this,
-					Gtk.DialogFlags.DESTROY_WITH_PARENT,
-					Gtk.MessageType.QUESTION,
-					Gtk.ButtonsType.YES_NO,
-					@"Are you sure you want to delete '$(service.name)' from the list?"
-				);
-				dialog.format_secondary_text(@"($(service.unit_name))");
-				var response = dialog.run();
-				if (response == Gtk.ResponseType.YES) {
-					App.services_model.remove(service);
-					save_config_file();
-					props.remove(service.unit_name);
-					row.destroy();
-				}
-				dialog.destroy();
+				delete_service(row);
 			});
 
 			return row;
-		}
-
-		private void start_service(Systemd.Unit u) {
-			try {
-				u.start("replace");
-			} catch (Error e) {
-				show_error(e);
-			}
-		}
-
-		public void stop_service(Systemd.Unit u) {
-			try {
-				u.stop("replace");
-			} catch (Error e) {
-				show_error(e);
-			}
-		}
-
-		public void restart_service(Systemd.Unit u) {
-			try {
-				u.restart("replace");
-			} catch (Error e) {
-				show_error(e);
-			}
-		}
-
-		public void reload_service(Systemd.Unit u) {
-			try {
-				u.reload("replace");
-			} catch (Error e) {
-				show_error(e);
-			}
-		}
-
-		public void show_error(Error e) {
-			var message_dialog = new Gtk.MessageDialog(this,
-				Gtk.DialogFlags.DESTROY_WITH_PARENT,
-				Gtk.MessageType.ERROR,
-				Gtk.ButtonsType.CLOSE, e.message);
-			message_dialog.title = "Error";
-			message_dialog.run();
-			message_dialog.destroy();
 		}
 
 		[GtkCallback]
@@ -288,7 +188,7 @@ namespace Ketip {
 					);
 				}
 			} catch (Error e) {
-				show_error(e);
+				show_error_dialog(this, e);
 			}
 		}
 
@@ -331,6 +231,25 @@ namespace Ketip {
             entry_new_service_name.text = "";
 			popover_rename.popdown();
         }
+
+		private void delete_service(ServiceRow row) {
+			var dialog = new Gtk.MessageDialog(
+				this,
+				Gtk.DialogFlags.DESTROY_WITH_PARENT,
+				Gtk.MessageType.QUESTION,
+				Gtk.ButtonsType.YES_NO,
+				@"Are you sure you want to delete '$(row.service.name)' from the list?"
+			);
+			dialog.format_secondary_text(@"($(row.service.unit_name))");
+			var response = dialog.run();
+			if (response == Gtk.ResponseType.YES) {
+				App.services_model.remove(row.service);
+				save_config_file();
+				props.remove(row.service.unit_name);
+				row.destroy();
+			}
+			dialog.destroy();
+		}
 
 		private void clear_form_add_service() {
 		    entry_service_name.text = "";

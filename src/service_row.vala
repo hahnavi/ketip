@@ -51,10 +51,14 @@ namespace Ketip {
 		[GtkChild]
 		public unowned Gtk.ModelButton button_delete_service;
 
+		private Gtk.Window window;
 		public Service service;
 		public Systemd.Unit? unit = null;
+		public Systemd.Properties? prop = null;
+		public ulong? switch_service_handler_id = null;
 
-		public ServiceRow(Service service) {
+		public ServiceRow(Gtk.Window window, Service service) {
+			this.window = window;
 			this.service = service;
 			try {
 				unit = Bus.get_proxy_sync(
@@ -64,7 +68,30 @@ namespace Ketip {
 			} catch (Error e) {
 				print(@"$(e.message)\n");
 			}
+
 			reload_widget();
+
+			if (unit.fragment_path != "") {
+				switch_service_handler_id = switch_service.notify["active"]
+					.connect(on_switch_service_active);
+				button_restart_service.clicked.connect(() => {
+					restart_service();
+				});
+
+				button_reload_service.clicked.connect(() => {
+					reload_service();
+				});
+
+				try {
+					prop = Bus.get_proxy_sync(
+						BusType.SYSTEM,
+						"org.freedesktop.systemd1",
+						App.manager.load_unit(service.unit_name));
+					prop.properties_changed.connect(on_props_changed);
+				} catch (Error e) {
+					print(@"$(e.message)\n");
+				}
+			};
 		}
 
 		public void reload_widget() {
@@ -78,6 +105,7 @@ namespace Ketip {
 				label_service_description.set_markup(
 					@"<small>$(unit.description)</small>"
 				);
+				switch_service.sensitive = true;
 			} else {
 				label_service_name.set_markup(@"<i><b>$(service.name)</b></i>");
 				label_service_unit_name.set_markup(
@@ -87,6 +115,9 @@ namespace Ketip {
 					"<i><small>(service not found)</small></i>"
 				);
 				switch_service.sensitive = false;
+				if (switch_service_handler_id != null) {
+					switch_service.disconnect(switch_service_handler_id);
+				}
 			}
 
 			if (unit.active_state == "active") {
@@ -101,6 +132,77 @@ namespace Ketip {
 				button_restart_service.hide();
 				button_reload_service.hide();
 				separator_menu_service_1.hide();
+			}
+		}
+
+		public void on_switch_service_active(GLib.Object object, ParamSpec param) {
+			var sw_service = (Gtk.Switch) object;
+			if (sw_service.active) {
+				start_service();
+			} else {
+				stop_service();
+			}
+		}
+
+		public void on_props_changed(string iface,
+									 HashTable <string, Variant> changed,
+									 string[] invalidated) {
+			if (iface == "org.freedesktop.systemd1.Unit") {
+				changed.foreach ((k,v) => {
+					if (k == "ActiveState") {
+						bool? state = null;
+						if ((string) v == "active") {
+							state = true;
+						} else if ((string) v == "inactive") {
+							state = false;
+						}
+						if (state != null) {
+							if (switch_service.active != state) {
+								switch_service.disconnect(switch_service_handler_id);
+								switch_service.active = state;
+								reload_widget();
+								switch_service_handler_id = switch_service.notify["active"]
+									.connect(on_switch_service_active);
+							}
+						}
+					}
+				});
+			}
+		}
+
+		public void start_service() {
+			try {
+				print(@"start '$(service.unit_name)'\n");
+				unit.start("replace");
+			} catch (Error e) {
+				show_error_dialog(window, e);
+			}
+		}
+
+		public void restart_service() {
+			try {
+				print(@"restart '$(service.unit_name)'\n");
+				unit.restart("replace");
+			} catch (Error e) {
+				show_error_dialog(window, e);
+			}
+		}
+
+		public void stop_service() {
+			try {
+				print(@"stop '$(service.unit_name)'\n");
+				unit.stop("replace");
+			} catch (Error e) {
+				show_error_dialog(window, e);
+			}
+		}
+
+		public void reload_service() {
+			try {
+				print(@"reload '$(service.unit_name)'\n");
+				unit.reload("replace");
+			} catch (Error e) {
+				show_error_dialog(window, e);
 			}
 		}
 	}

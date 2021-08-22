@@ -97,4 +97,16 @@ namespace Ketip {
             print ("Unable to parse 'config.json': %s\n", e.message);
         }
     }
+
+    public static void show_error_dialog(Gtk.Window window, Error e) {
+        var message_dialog = new Gtk.MessageDialog(window,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            Gtk.MessageType.ERROR,
+            Gtk.ButtonsType.CLOSE, e.message);
+        message_dialog.title = "Error";
+        message_dialog.run();
+        message_dialog.destroy();
+    }
+
+    public static void empty_handler(Object object, ParamSpec param) {}
 }
