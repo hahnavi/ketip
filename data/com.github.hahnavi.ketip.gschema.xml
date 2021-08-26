@@ -1,11 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="ketip">
 	<schema id="com.github.hahnavi.ketip" path="/com/github/hahnavi/ketip/">
-	  <key name="services" type="s">
-	    <default>WEWEWE</default>
-	    <summary>Service List</summary>
+	  <key name="win-pos-x" type="i">
+	    <default>240</default>
+	    <summary>Window horizontal position</summary>
 	    <description>
-	      List of services to manage
+	      The saved horizontal position of the main window
+	    </description>
+	  </key>
+	  <key name="win-pos-y" type="i">
+	    <default>100</default>
+	    <summary>Window vertical position</summary>
+	    <description>
+	      The saved vertical position of the main window
+	    </description>
+	  </key>
+	  <key name="win-width" type="i">
+	    <default>640</default>
+	    <summary>Window width</summary>
+	    <description>
+	      The saved width of the main window
+	    </description>
+	  </key>
+	  <key name="win-height" type="i">
+	    <default>480</default>
+	    <summary>Window height</summary>
+	    <description>
+	      The saved height of the main window
 	    </description>
 	  </key>
 	</schema>

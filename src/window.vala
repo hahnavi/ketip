@@ -59,16 +59,19 @@ namespace Ketip {
 
 		public Window (Gtk.Application app) {
 			Object (
-				application: app,
-				window_position: Gtk.WindowPosition.CENTER			
+				application: app		
 			);
+
+			move(App.settings.get_int("win-pos-x"), App.settings.get_int("win-pos-y"));
+			resize(App.settings.get_int("win-width"), App.settings.get_int("win-height"));
+
 			props = new HashTable<string, Systemd.Properties>(str_hash, str_equal);
 
 			menu_main_reload_list.clicked.connect(() => {
 				reload_list();
 			});
 			menu_main_about.clicked.connect(() => {
-				string[] authors = {"Abdul Munif Hanafi"};
+				string[] authors = { "Abdul Munif Hanafi" };
 				Gtk.show_about_dialog (
 					this,
 					"authors", authors,
@@ -81,14 +84,21 @@ namespace Ketip {
 					"website", "https://github.com/hahnavi/ketip"
 				);
 			});
+
 			reload_list();
-			get_list_unit_files.begin((obj, res) => {
-				get_list_unit_files.end(res);
+
+			Timeout.add(100, () => {
+				get_list_unit_files();
+				return false;
+			});
+
+			delete_event.connect(e => {
+				return before_destroy();
 			});
 		}
 
-		private async void get_list_unit_files() {
-			Timeout.add(1000, () => {
+		private void get_list_unit_files() {
+			Idle.add(() => {
 				if (App.manager != null) {
 					try {
 						Systemd.Manager.UnitFile[] unit_files = App.manager.list_unit_files();
@@ -104,7 +114,7 @@ namespace Ketip {
 						show_error_dialog(this, e);
 					}
 				}
-				return false;
+				return Source.REMOVE;
 			});
 		}
 
@@ -260,6 +270,20 @@ namespace Ketip {
 			props.remove_all();
 			list_box_services.bind_model(App.services_model, create_list_row);
 			list_box_services.show_all();
+		}
+
+		private bool before_destroy() {
+			int width, height, pos_x, pos_y;
+
+			get_size(out width, out height);
+			get_position(out pos_x, out pos_y);
+
+			App.settings.set_int("win-pos-x", pos_x);
+			App.settings.set_int("win-pos-y", pos_y);
+			App.settings.set_int("win-width", width);
+			App.settings.set_int("win-height", height);
+
+			return false;
 		}
 	}
 }

@@ -23,6 +23,7 @@ namespace Ketip {
         public static App app;
         public static ServicesListModel services_model = new ServicesListModel ();
         public static Systemd.Manager? manager = null;
+        public static Settings settings = new Settings(Config.APP_ID);
 
         public App() {
             application_id = Config.APP_ID;
