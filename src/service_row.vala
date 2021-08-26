@@ -55,7 +55,6 @@ namespace Ketip {
 		public Service service;
 		public Systemd.Unit? unit = null;
 		public Systemd.Properties? prop = null;
-		public ulong? switch_service_handler_id = null;
 
 		public ServiceRow(Gtk.Window window, Service service) {
 			this.window = window;
@@ -65,33 +64,27 @@ namespace Ketip {
 					BusType.SYSTEM,
 					"org.freedesktop.systemd1",
 					App.manager.load_unit(service.unit_name));
-			} catch (Error e) {
-				print(@"$(e.message)\n");
-			}
 
-			reload_widget();
+				if (unit.fragment_path != "") {
+					button_restart_service.clicked.connect(() => {
+						restart_service();
+					});
 
-			if (unit.fragment_path != "") {
-				switch_service_handler_id = switch_service.notify["active"]
-					.connect(on_switch_service_active);
-				button_restart_service.clicked.connect(() => {
-					restart_service();
-				});
+					button_reload_service.clicked.connect(() => {
+						reload_service();
+					});
 
-				button_reload_service.clicked.connect(() => {
-					reload_service();
-				});
-
-				try {
 					prop = Bus.get_proxy_sync(
 						BusType.SYSTEM,
 						"org.freedesktop.systemd1",
 						App.manager.load_unit(service.unit_name));
 					prop.properties_changed.connect(on_props_changed);
-				} catch (Error e) {
-					print(@"$(e.message)\n");
 				}
-			};
+			} catch (Error e) {
+				print(@"$(e.message)\n");
+			}
+
+			reload_widget();
 		}
 
 		public void reload_widget() {
@@ -101,24 +94,7 @@ namespace Ketip {
 			label_service_unit_name.set_markup (
 			    @"<small>($(service.unit_name))</small>"
 			);
-			if (unit.fragment_path != "") {
-				label_service_description.set_markup(
-					@"<small>$(unit.description)</small>"
-				);
-				switch_service.sensitive = true;
-			} else {
-				label_service_name.set_markup(@"<i><b>$(service.name)</b></i>");
-				label_service_unit_name.set_markup(
-					@"<i><small>($(service.unit_name))</small></i>"
-				);
-				label_service_description.set_markup(
-					"<i><small>(service not found)</small></i>"
-				);
-				switch_service.sensitive = false;
-				if (switch_service_handler_id != null) {
-					switch_service.disconnect(switch_service_handler_id);
-				}
-			}
+			switch_service.notify["active"].disconnect(on_switch_service_active);
 
 			if (unit.active_state == "active") {
 				switch_service.active = true;
@@ -132,6 +108,23 @@ namespace Ketip {
 				button_restart_service.hide();
 				button_reload_service.hide();
 				separator_menu_service_1.hide();
+			}
+
+			if (unit.fragment_path != "") {
+				label_service_description.set_markup(
+					@"<small>$(unit.description)</small>"
+				);
+				switch_service.sensitive = true;
+				switch_service.notify["active"].connect(on_switch_service_active);
+			} else {
+				label_service_name.set_markup(@"<i><b>$(service.name)</b></i>");
+				label_service_unit_name.set_markup(
+					@"<i><small>($(service.unit_name))</small></i>"
+				);
+				label_service_description.set_markup(
+					"<i><small>(service not found)</small></i>"
+				);
+				switch_service.sensitive = false;
 			}
 		}
 
@@ -158,11 +151,7 @@ namespace Ketip {
 						}
 						if (state != null) {
 							if (switch_service.active != state) {
-								switch_service.disconnect(switch_service_handler_id);
-								switch_service.active = state;
-								reload_widget();
-								switch_service_handler_id = switch_service.notify["active"]
-									.connect(on_switch_service_active);
+								Timeout.add(100, () => { reload_widget(); return false; });
 							}
 						}
 					}
@@ -176,6 +165,7 @@ namespace Ketip {
 				unit.start("replace");
 			} catch (Error e) {
 				show_error_dialog(window, e);
+				Timeout.add(50, () => { reload_widget(); return false; });
 			}
 		}
 
@@ -194,6 +184,7 @@ namespace Ketip {
 				unit.stop("replace");
 			} catch (Error e) {
 				show_error_dialog(window, e);
+				Timeout.add(50, () => { reload_widget(); return false; });
 			}
 		}
 
