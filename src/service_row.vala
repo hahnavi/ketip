@@ -18,7 +18,7 @@
 
 namespace Ketip {
 
-	[GtkTemplate (ui = "/com/github/hahnavi/ketip/service_row.ui")]
+	[GtkTemplate (ui = "/com/github/hahnavi/ketip/ui/service_row.ui")]
 	public class ServiceRow : Gtk.ListBoxRow {
 
 		[GtkChild]

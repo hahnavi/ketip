@@ -1,4 +1,4 @@
-/* unit.vala
+/* systemd.vala
  *
  * Copyright 2021 Abdul Munif Hanafi
  *
@@ -17,6 +17,28 @@
  */
 
 namespace Ketip.Systemd {
+
+    [DBus (name = "org.freedesktop.systemd1.Manager")]
+    public interface Manager : DBusProxy {
+
+        public struct UnitFile {
+            string path;
+            string state;
+        }
+
+        [DBus (name = "LoadUnit")]
+        public abstract ObjectPath load_unit(string name) throws DBusError, IOError;
+
+        [DBus (name = "ListUnitFiles")]
+        public abstract UnitFile[] list_unit_files() throws DBusError, IOError;
+    }
+
+    [DBus (name = "org.freedesktop.DBus.Properties")]
+    public interface Properties : DBusProxy {
+
+        [DBus (name = "PropertiesChanged")]
+        public signal void properties_changed(string iface, HashTable<string, Variant> changed_properties, string[] invalidated_properties);
+    }
 
     [DBus (name = "org.freedesktop.systemd1.Unit", timeout = 120000)]
     public interface Unit : DBusProxy {

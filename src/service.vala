@@ -17,6 +17,7 @@
  */
 
 namespace Ketip {
+
 	public class Service : Object {
 
 		public string name;
@@ -25,6 +26,34 @@ namespace Ketip {
 		public Service(string name, string unit_name) {
 			this.name = name;
 			this.unit_name = unit_name;
+		}
+
+    	public void serialize (GLib.VariantBuilder builder) {
+			builder.open (new GLib.VariantType ("a{sv}"));
+			builder.add ("{sv}", "name", new GLib.Variant.string ((string) name));
+			builder.add ("{sv}", "unit_name", new GLib.Variant.string ((string) unit_name));
+			builder.close ();
+		}
+
+		public static Service? deserialize (Variant service_variant) {
+			string key;
+        	Variant val;
+			string? name = null;
+			string? unit_name = null;
+			var iter = service_variant.iterator ();
+			while (iter.next ("{sv}", out key, out val)) {
+				if (key == "name") {
+					name = (string) val;
+				} else if (key == "unit_name") {
+					unit_name = (string) val;
+				}
+			}
+
+			if (name != null && unit_name != null) {
+				return new Service(name, unit_name);
+			}
+
+			return null;
 		}
 	}
 }

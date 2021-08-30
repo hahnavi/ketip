@@ -1,33 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="ketip">
-	<schema id="com.github.hahnavi.ketip" path="/com/github/hahnavi/ketip/">
-	  <key name="win-pos-x" type="i">
-	    <default>240</default>
-	    <summary>Window horizontal position</summary>
+  <schema id="com.github.hahnavi.ketip" path="/com/github/hahnavi/ketip/">
+    <key name="win-pos-x" type="i">
+      <default>240</default>
+      <summary>Window horizontal position</summary>
+      <description>
+        The saved horizontal position of the main window
+      </description>
+    </key>
+    <key name="win-pos-y" type="i">
+      <default>100</default>
+      <summary>Window vertical position</summary>
+      <description>
+        The saved vertical position of the main window
+      </description>
+    </key>
+    <key name="win-width" type="i">
+      <default>640</default>
+      <summary>Window width</summary>
+      <description>
+        The saved width of the main window
+      </description>
+    </key>
+    <key name="win-height" type="i">
+      <default>480</default>
+      <summary>Window height</summary>
+      <description>
+        The saved height of the main window
+      </description>
+    </key>
+	  <key name="win-maximized" type="b">
+	    <default>false</default>
+	    <summary>Window maximized</summary>
 	    <description>
-	      The saved horizontal position of the main window
+	      The saved maximized status of the main window
 	    </description>
 	  </key>
-	  <key name="win-pos-y" type="i">
-	    <default>100</default>
-	    <summary>Window vertical position</summary>
-	    <description>
-	      The saved vertical position of the main window
-	    </description>
-	  </key>
-	  <key name="win-width" type="i">
-	    <default>640</default>
-	    <summary>Window width</summary>
-	    <description>
-	      The saved width of the main window
-	    </description>
-	  </key>
-	  <key name="win-height" type="i">
-	    <default>480</default>
-	    <summary>Window height</summary>
-	    <description>
-	      The saved height of the main window
-	    </description>
-	  </key>
-	</schema>
+    <key name="services" type="aa{sv}">
+      <default>[]</default>
+      <summary>Services</summary>
+      <description>
+        List of services.
+      </description>
+    </key>
+  </schema>
 </schemalist>

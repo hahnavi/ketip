@@ -1,3 +1,8 @@
+resource_files = files ('ketip.gresource.xml')
+resources = gnome.compile_resources('com.github.hahnavi.ketip', resource_files,
+  c_name: 'resources'
+)
+
 desktop_file = i18n.merge_file(
   input: 'com.github.hahnavi.ketip.desktop.in',
   output: 'com.github.hahnavi.ketip.desktop',

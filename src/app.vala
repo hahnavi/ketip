@@ -21,7 +21,6 @@ namespace Ketip {
     public class App : Gtk.Application {
 
         public static App app;
-        public static ServicesListModel services_model = new ServicesListModel ();
         public static Systemd.Manager? manager = null;
         public static Settings settings = new Settings(Config.APP_ID);
 
@@ -29,32 +28,29 @@ namespace Ketip {
             application_id = Config.APP_ID;
             flags = ApplicationFlags.FLAGS_NONE;
             app = this;
+        }
 
-            startup.connect (() => {
-                File file = File.new_for_path (get_config_file_path());
-                if (!file.query_exists ()) {
-                    create_config_file();
-                }
+        public override void startup() {
+            base.startup ();
 
-                load_config_file();
+            Hdy.init ();
 
-                try {
-                    manager = Bus.get_proxy_sync(
-                        BusType.SYSTEM,
-                        "org.freedesktop.systemd1",
-                        "/org/freedesktop/systemd1");
-                } catch (IOError e) {
-                    print(@"$(e.message)\n");
-                }
-            });
+            try {
+                manager = Bus.get_proxy_sync(
+                    BusType.SYSTEM,
+                    "org.freedesktop.systemd1",
+                    "/org/freedesktop/systemd1");
+            } catch (IOError e) {
+                print(@"$(e.message)\n");
+            }
+        }
 
-            activate.connect (() => {
-                var win = app.active_window;
-                if (win == null) {
-                    win = new Ketip.Window (app);
-                }
-                win.present ();
-            });
+        protected override void activate () {
+            var win = app.active_window;
+            if (win == null) {
+                win = new Ketip.Window (app);
+            }
+            win.present ();
         }
     }
 }

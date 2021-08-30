@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="/com/github/hahnavi/ketip">
-    <file>window.ui</file>
-    <file>service_row.ui</file>
+    <file>ui/window.ui</file>
+    <file>ui/service_row.ui</file>
   </gresource>
 </gresources>

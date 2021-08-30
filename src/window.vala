@@ -18,8 +18,17 @@
 
 namespace Ketip {
 
-	[GtkTemplate (ui = "/com/github/hahnavi/ketip/window.ui")]
-	public class Window : Gtk.ApplicationWindow {
+	[GtkTemplate (ui = "/com/github/hahnavi/ketip/ui/window.ui")]
+	public class Window : Hdy.ApplicationWindow {
+
+		[GtkChild]
+	    private unowned Hdy.HeaderBar header_bar;
+
+		[GtkChild]
+	    private unowned Gtk.MenuButton button_add_service;
+
+		[GtkChild]
+	    private unowned Gtk.Button button_add_service_2;
 
 	    [GtkChild]
 	    private unowned Gtk.Popover popover_add_service;
@@ -43,6 +52,15 @@ namespace Ketip {
 		private unowned Gtk.ModelButton menu_main_about;
 
 		[GtkChild]
+		private unowned Gtk.Stack stack_view;
+
+		[GtkChild]
+		private unowned Gtk.Widget empty_view;
+
+		[GtkChild]
+		private unowned Gtk.ScrolledWindow list_view;
+
+		[GtkChild]
 		private unowned Gtk.ListBox list_box_services;
 
 		[GtkChild]
@@ -54,16 +72,28 @@ namespace Ketip {
 		[GtkChild]
 		private unowned Gtk.Button button_rename;
 
+		private ServicesListModel services;
 		private HashTable<string, Systemd.Properties> props;
 		private Service service_to_rename;
 
 		public Window (Gtk.Application app) {
-			Object (
-				application: app		
-			);
+			Object (application: app);
 
-			move(App.settings.get_int("win-pos-x"), App.settings.get_int("win-pos-y"));
-			resize(App.settings.get_int("win-width"), App.settings.get_int("win-height"));
+			unowned string? use_csd = Environment.get_variable ("GTK_CSD");
+			if (use_csd == "0") {
+				header_bar.set_show_close_button (false);
+			}
+
+			set_default_size(App.settings.get_int("win-width"), App.settings.get_int("win-height"));
+			if (App.settings.get_boolean("win-maximized")) {
+				maximize();
+			} else {
+				move(App.settings.get_int("win-pos-x"), App.settings.get_int("win-pos-y"));
+				resize(App.settings.get_int("win-width"), App.settings.get_int("win-height"));
+			}
+
+			services = new ServicesListModel();
+			load();
 
 			props = new HashTable<string, Systemd.Properties>(str_hash, str_equal);
 
@@ -85,9 +115,17 @@ namespace Ketip {
 				);
 			});
 
+			button_add_service_2.clicked.connect(() => {
+				button_add_service.clicked();
+			});
+
+			services.items_changed.connect((position, removed, added) => {
+				stack_view.visible_child = services.get_n_items () == 0 ? empty_view : list_view;
+			});
+
 			reload_list();
 
-			Timeout.add(100, () => {
+			Timeout.add(200, () => {
 				get_list_unit_files();
 				return false;
 			});
@@ -186,11 +224,10 @@ namespace Ketip {
 						"org.freedesktop.systemd1",
 						App.manager.load_unit(service.unit_name));
 				if (u.fragment_path != "") {
-					App.services_model.add(service);
-					save_config_file();
+					services.add(service);
+					save();
 					popover_add_service.popdown();
 					clear_form_add_service();
-					list_box_services.add(new_service_row(service));
 					list_box_services.show_all();
 				} else {
 					throw new DBusError.FILE_NOT_FOUND(
@@ -203,11 +240,13 @@ namespace Ketip {
 		}
 
 		private bool is_service_already_exists(string unit_name) {
-			foreach (var service in App.services_model) {
-				if (service.unit_name == unit_name) {
+			var n = services.get_n_items ();
+            for (int i = 0; i < n; i++) {
+                var item = (Service) services.get_object (i);
+                if (item.unit_name == unit_name) {
 					return true;
-				}
-			}
+                }
+            }
 			return false;
 		}
 
@@ -231,10 +270,10 @@ namespace Ketip {
         [GtkCallback]
         private void button_rename_clicked(Gtk.Button button) {
             if (entry_new_service_name.text != service_to_rename.name) {
-                var position = App.services_model.index_of(service_to_rename);
+                var position = services.get_index(service_to_rename);
                 service_to_rename.name = entry_new_service_name.text;
-				App.services_model.@set(position, service_to_rename);
-				save_config_file();
+				services.set_item(position, service_to_rename);
+				save();
 				((ServiceRow) list_box_services.get_row_at_index(position))
 					.reload_widget();
             }
@@ -253,10 +292,9 @@ namespace Ketip {
 			dialog.format_secondary_text(@"($(row.service.unit_name))");
 			var response = dialog.run();
 			if (response == Gtk.ResponseType.YES) {
-				App.services_model.remove(row.service);
-				save_config_file();
+				services.remove(row.service);
+				save();
 				props.remove(row.service.unit_name);
-				row.destroy();
 			}
 			dialog.destroy();
 		}
@@ -268,20 +306,34 @@ namespace Ketip {
 
 		private void reload_list() {
 			props.remove_all();
-			list_box_services.bind_model(App.services_model, create_list_row);
+			stack_view.visible_child = services.get_n_items () == 0 ? empty_view : list_view;
+			list_box_services.bind_model(services, create_list_row);
 			list_box_services.show_all();
 		}
 
+		private void load () {
+			services.deserialize (App.settings.get_value ("services"), Service.deserialize);
+		}
+
+		private void save() {
+			App.settings.set_value("services", services.serialize());
+		}
+
 		private bool before_destroy() {
-			int width, height, pos_x, pos_y;
+			if (is_maximized) {
+				App.settings.set_boolean("win-maximized", true);
+			} else {
+				int width, height, pos_x, pos_y;
 
-			get_size(out width, out height);
-			get_position(out pos_x, out pos_y);
+				get_size(out width, out height);
+				get_position(out pos_x, out pos_y);
 
-			App.settings.set_int("win-pos-x", pos_x);
-			App.settings.set_int("win-pos-y", pos_y);
-			App.settings.set_int("win-width", width);
-			App.settings.set_int("win-height", height);
+				App.settings.set_int("win-pos-x", pos_x);
+				App.settings.set_int("win-pos-y", pos_y);
+				App.settings.set_int("win-width", width);
+				App.settings.set_int("win-height", height);
+				App.settings.set_boolean("win-maximized", false);
+			}
 
 			return false;
 		}
