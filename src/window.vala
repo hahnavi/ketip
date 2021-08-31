@@ -108,7 +108,7 @@ namespace Ketip {
 					"copyright", "Copyright \xc2\xa9 2021 Abdul Munif Hanafi",
 					"license-type", Gtk.License.GPL_3_0,
 					"program-name", "Ketip",
-					"comments", "systemd Service Manager",
+					"comments", _("systemd Service Manager"),
 					"logo-icon-name", Config.APP_ID,
 					"version", Config.VERSION,
 					"website", "https://github.com/hahnavi/ketip"
@@ -212,7 +212,7 @@ namespace Ketip {
 			try {
 				if (is_service_already_exists(entry_unit_name.text)) {
 					throw new IOError.EXISTS(
-						@"'$(entry_unit_name.text)' already exists."
+						_("'%s' already exists.").printf(entry_unit_name.text)
 					);
 				}
 				var service = new Service(
@@ -287,7 +287,7 @@ namespace Ketip {
 				Gtk.DialogFlags.DESTROY_WITH_PARENT,
 				Gtk.MessageType.QUESTION,
 				Gtk.ButtonsType.YES_NO,
-				@"Are you sure you want to delete '$(row.service.name)' from the list?"
+				_("Are you sure you want to delete '%s' from the list?").printf(row.service.name)
 			);
 			dialog.format_secondary_text(@"($(row.service.unit_name))");
 			var response = dialog.run();

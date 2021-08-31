@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schemalist gettext-domain="ketip">
+<schemalist gettext-domain="@GETTEXT_PACKAGE@">
   <schema id="com.github.hahnavi.ketip" path="/com/github/hahnavi/ketip/">
     <key name="win-pos-x" type="i">
       <default>240</default>

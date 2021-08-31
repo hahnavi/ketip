@@ -1,7 +1,6 @@
 data/com.github.hahnavi.ketip.desktop.in
 data/com.github.hahnavi.ketip.appdata.xml.in
 data/com.github.hahnavi.ketip.gschema.xml
-src/window.ui
-src/main.vala
+data/ui/service_row.ui
+data/ui/window.ui
 src/window.vala
-

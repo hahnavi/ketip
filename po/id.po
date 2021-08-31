@@ -1,0 +1,89 @@
+# Indonesian translation for ketip.
+# Copyright (C) 2021 ketip's COPYRIGHT HOLDER
+# This file is distributed under the same license as the ketip package.
+#
+# Abdul Munif Hanafi <amunifhanafi@gmail.com>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ketip main\n"
+"Report-Msgid-Bugs-To: https://github.com/hahnavi/ketip/issues\n"
+"POT-Creation-Date: 2021-08-31 10:26+0700\n"
+"PO-Revision-Date: 2021-08-31 10:50+0700\n"
+"Last-Translator: Abdul Munif Hanafi <amunifhanafi@gmail.com>\n"
+"Language: id\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: data/com.github.hahnavi.ketip.appdata.xml.in:7
+msgid "Ketip"
+msgstr "Ketip"
+
+#: data/com.github.hahnavi.ketip.appdata.xml.in:8
+msgid "systemd Service Manager with GUI"
+msgstr "Pengelola Layanan systemd dengan GUI"
+
+#: data/ui/window.ui:44
+#: data/ui/window.ui:57
+#: data/ui/window.ui:391
+msgid "Service Name"
+msgstr "Nama Layanan"
+
+#: data/ui/window.ui:84
+msgid "Unit Name"
+msgstr "Nama Unit"
+
+#: data/ui/window.ui:97
+msgid "unit-name.service"
+msgstr "nama-unit.service"
+
+#: data/ui/window.ui:124
+msgid "Cancel"
+msgstr "Batal"
+
+#: data/ui/window.ui:138
+msgid "Add"
+msgstr "Tambah"
+
+#: data/ui/window.ui:180
+msgid "Reload List"
+msgstr "Muat Ulang"
+
+#: data/ui/window.ui:205
+msgid "About Ketip"
+msgstr "Tentang Ketip"
+
+#: data/ui/window.ui:231
+#: src/window.vala:111
+msgid "systemd Service Manager"
+msgstr "Pengelola Layanan systemd"
+
+#: data/ui/window.ui:308
+msgid "Add Service"
+msgstr "Tambah Layanan"
+
+#: data/ui/window.ui:416
+msgid "Rename"
+msgstr "Ubah Nama"
+
+#: data/ui/service_row.ui:19
+msgid "Restart"
+msgstr "Mulai Ulang"
+
+#: data/ui/service_row.ui:31
+msgid "Reload"
+msgstr "Muat Ulang"
+
+#: data/ui/service_row.ui:68
+msgid "Delete"
+msgstr "Hapus"
+
+#: src/window.vala:215
+msgid "'%s' already exists."
+msgstr "'%s' sudah ada."
+
+#: src/window.vala:290
+msgid "Are you sure you want to delete '%s' from the list?"
+msgstr "Apakah Anda yakin ingin menghapus '%s' dari daftar?"

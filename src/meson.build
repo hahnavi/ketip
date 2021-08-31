@@ -30,9 +30,14 @@ ketip_vala_args = [
   '--gresources', resource_files,
 ]
 
+c_args = [
+  '-DGETTEXT_PACKAGE="ketip"',
+]
+
 executable('ketip', ketip_sources,
   include_directories: config_h_dir,
   vala_args: ketip_vala_args,
+  c_args : c_args,
   dependencies: ketip_deps,
   install: true,
 )
